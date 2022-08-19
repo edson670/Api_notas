@@ -3,7 +3,7 @@ const knex = require("../database/knex")
 class NotesController {
     async create(request, response){
         const { title, description, tags, links } = request.body
-        const { user_id } = request.params
+        const user_id = request.user.id
 
         const note_id = await knex("notes").insert({
             title,
@@ -14,12 +14,12 @@ class NotesController {
         const linksInsert = links.map(link => {
             return {
                 note_id,
-                url: link
+                url: link,
             }
         })
 
         await knex("links").insert(linksInsert)
-
+ 
         const tagsInsert = tags.map(name => {
             return {
                 note_id,
@@ -58,22 +58,24 @@ class NotesController {
     }
 
     async index(request, response){
-        const { title, user_id, tags} = request.query
+        const { title, tags} = request.query
+
+        const user_id = request.user.id
 
         let notes
 
         if ( tags ){
-            const filterTags = tags.split(',').map(tag => tag.trim())
+            const filterTags = tags.split(',').map(tag => tag)
             
             notes = await knex("tags")
             .select([
                 "notes.id",
                 "notes.title",
-                "notes.user_id",
+                "notes.user_id"
             ])
             .where("notes.user_id", user_id)
-            .whereLike("notes.title", `%${title}%` )
-            .whereIn("name", filterTags)
+            .whereLike("title", `%${title}%` )
+            .whereIn("tags.name", filterTags)
             .innerJoin("notes","notes.id", "tags.note_id")
             .orderBy("notes.title")
  
