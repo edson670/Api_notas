@@ -44,7 +44,7 @@ class NotesController {
         return response.json({
             ...note,
             tags,
-            links 
+            links
         })
     }
 
